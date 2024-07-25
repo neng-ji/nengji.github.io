@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gun Violence Incidents (Unit: Number of incidents) </title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        .bar-west {
+            fill: steelblue;
+        }
+        .bar-east {
+            fill: orange;
+        }
+        .bar-middle {
+            fill: green;
+        }
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: 28px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px; 
+        }
+        .button-group button {
+            margin-right: 10px;
+            transition: background-color 0.3s ease;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        #westButton {
+            background-color: steelblue;
+            color: white;
+        }
+        #eastButton {
+            background-color: orange;
+            color: white;
+        }
+        #middleButton {
+            background-color: green;
+            color: white;
+        }
+        #compareButton {
+            background-color: purple;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gun Violence Incidents (Unit: Number of incidents) </h1>
+    <p>This visualization compares gun violence incidents between the West Coast, East Coast, and Middle states.</p>
+
+    <div id="buttons">
+        <button id="westButton">West Coast</button>
+        <button id="eastButton">East Coast</button>
+        <button id="middleButton">Middle States</button>
+        <button id="compareButton">Compare Regions</button>
+    </div>
+    <div id="scene_one"></div>
+    <div class="button-group">
+        <button onclick="window.location.href='index.html'">Previous</button>
+        <button onclick="window.location.href='scene2.html'">Next</button>
+    </div>
+
+    <script>
+        const CSV_URL = "https://raw.githubusercontent.com/move-coop/gun-violence-data/master/intermediate/stage2.01.2018.csv";
+        const width = 1000, height = 600;
+        const margin = {top: 50, right: 50, bottom: 150, left: 70};
+
+        var xScale = d3.scaleBand().rangeRound([margin.left, width - margin.right]).padding(0.1);
+        var yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
+        var svg, tooltip, data;
+
+        const regions = {
+            west: ["California", "Oregon", "Washington", "Alaska", "Hawaii", "Nevada", "Arizona", "New Mexico", "Colorado", "Montana", "Utah", "Idaho", "Wyoming"],
+            east: ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland", "District of Columbia", "Virginia", "West Virginia", "North Carolina", "South Carolina", "Georgia", "Florida"],
+            middle: ["Ohio", "Kentucky", "Tennessee", "Michigan", "Indiana", "Wisconsin", "Illinois", "Minnesota", "Iowa", "Missouri", "Arkansas", "Louisiana", "North Dakota", "South Dakota", "Nebraska", "Kansas", "Oklahoma", "Texas", "Mississippi", "Alabama"]
+        };
+
+        function initializeSvg() {
+            d3.select("svg").remove();
+
+            svg = d3.select("#scene_one").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+        }
+
+        function drawAverageLine(avg) {
+            svg.append("line")
+                .attr("x1", margin.left)
+                .attr("x2", width - margin.right)
+                .attr("y1", yScale(avg))
+                .attr("y2", yScale(avg))
+                .attr("stroke", "red")
+                .attr("stroke-width", 2)
+                .attr("stroke-dasharray", "5,5");
+
+            svg.append("text")
+                .attr("x", width - margin.right)
+                .attr("y", yScale(avg) - 5)
+                .attr("text-anchor", "end")
+                .attr("fill", "red")
+                .text(`Average: ${avg.toFixed(2)}`);
+        }
+
+        function drawChart(region) {
+            var barClass = region === "west" ? "bar-west" : region === "east" ? "bar-east" : "bar-middle";
+            var displayData = data.filter(d => regions[region].includes(d.state));
+
+            initializeSvg();
+
+            var maxValue = d3.max(displayData, d => d.incidents);
+            xScale.domain(displayData.map(d => d.state));
+            yScale.domain([0, maxValue]);
+
+            svg.selectAll(".bar")
+                .data(displayData)
+                .enter().append("rect")
+                .attr("class", barClass)
+                .attr("x", d => xScale(d.state))
+                .attr("y", d => yScale(d.incidents))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => height - yScale(d.incidents) - margin.bottom)
+                .on("mouseover", (event, d) => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html("Incidents: " + d.incidents)
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            svg.append("g")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(d3.axisBottom(xScale))
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-0.8em")
+                .attr("dy", "0.15em")
+                .attr("transform", "rotate(-65)");
+
+            svg.append("g")
+                .attr("transform", "translate(" + margin.left + ",0)")
+                .call(d3.axisLeft(yScale));
+
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Number of Incidents");
+
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 2) + " ," + (height - margin.bottom / 3) + ")")
+                .style("text-anchor", "middle")
+                .text("State");
+
+            // Draw average line
+            drawAverageLine((34 + 53 + 84) / 51);
+        }
+
+        function drawComparisonChart() {
+            const totalIncidents = [
+                { region: "West Coast", incidents: 34 },
+                { region: "East Coast", incidents: 53 },
+                { region: "Middle States", incidents: 84 }
+            ];
+
+            xScale.domain(totalIncidents.map(d => d.region));
+            yScale.domain([0, d3.max(totalIncidents, d => d.incidents)]);
+
+            initializeSvg();
+
+            svg.selectAll(".bar")
+                .data(totalIncidents)
+                .enter().append("rect")
+                .attr("class", d => d.region === "West Coast" ? "bar-west" : d.region === "East Coast" ? "bar-east" : "bar-middle")
+                .attr("x", d => xScale(d.region))
+                .attr("y", d => yScale(d.incidents))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => height - yScale(d.incidents) - margin.bottom)
+                .on("mouseover", (event, d) => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", .9);
+                    tooltip.html("Incidents: " + d.incidents)
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => {
+                    tooltip.transition()
+                        .duration(500)
+                        .style("opacity", 0);
+                });
+
+            svg.append("g")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(d3.axisBottom(xScale))
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-0.8em")
+                .attr("dy", "0.15em")
+                .attr("transform", "rotate(-65)");
+
+            svg.append("g")
+                .attr("transform", "translate(" + margin.left + ",0)")
+                .call(d3.axisLeft(yScale));
+
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text("Number of Incidents");
+
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 2) + " ," + (height - margin.bottom / 3) + ")")
+                .style("text-anchor", "middle")
+                .text("Region");
+        }
+
+        d3.csv(CSV_URL).then(csvData => {
+            data = csvData.map(d => ({
+                state: d.state,
+                incidents: +d.n_killed + +d.n_injured
+            }));
+
+            drawChart("west");
+        });
+
+        d3.select("#westButton").on("click", () => {
+            drawChart("west");
+        });
+
+        d3.select("#eastButton").on("click", () => {
+            drawChart("east");
+        });
+
+        d3.select("#middleButton").on("click", () => {
+            drawChart("middle");
+        });
+
+        d3.select("#compareButton").on("click", () => {
+            drawComparisonChart();
+        });
+    </script>
+</body>
+</html>

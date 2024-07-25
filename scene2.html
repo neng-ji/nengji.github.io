@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Gun Violence Impact by State - Scene 2</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            max-width: 1200px;
+            margin: auto;
+            padding: 10px;
+            font-family: Arial, sans-serif;
+        }
+
+        h1 {
+            color: #333;
+            font-size: xx-large;
+        }
+
+        p {
+            margin-top: 0.0em;
+            margin-bottom: 0.3em;
+        }
+
+        #regionButtons, #dataButtons {
+            margin-bottom: 20px;
+        }
+
+        button {
+            margin: 5px;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        #westButton {
+            background-color: steelblue;
+            color: white;
+        }
+
+        #eastButton {
+            background-color: orange;
+            color: white;
+        }
+
+        #middleButton {
+            background-color: green;
+            color: white;
+        }
+
+        #killedButton {
+            background-color: orange;
+            color: white;
+        }
+
+        #injuredButton {
+            background-color: red;
+            color: white;
+        }
+
+        .bar-killed {
+            fill: orange;
+        }
+
+        .bar-injured {
+            fill: red;
+        }
+
+        .tooltip {
+            position: absolute;
+            text-align: center;
+            width: 120px;
+            height: 28px;
+            padding: 2px;
+            font: 12px sans-serif;
+            background: lightsteelblue;
+            border: 0px;
+            border-radius: 8px;
+            pointer-events: none;
+        }
+
+        .button-group {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .button-group button {
+            margin-right: 10px;
+            background-color: #dbd8d8;
+            transition: background-color 0.3s ease;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .button-group button:hover {
+            background-color: #9b9898;
+        }
+    </style>
+</head>
+<body>
+    <h1>Gun Violence Impact by State: Deaths and Injuries (Unit: number of person)</h1>
+    <p>This scene provides an overview of gun violence impact across different states in the US. You can toggle between the number of people killed and injured using the buttons below.</p>
+
+    <div id="regionButtons">
+        <button id="westButton">West Coast</button>
+        <button id="eastButton">East Coast</button>
+        <button id="middleButton">Middle States</button>
+    </div>
+    <div id="dataButtons" style="display:none;">
+        <button id="killedButton">Killed</button>
+        <button id="injuredButton">Injured</button>
+    </div>
+    <div id="scene_two"></div>
+
+    <div class="button-group">
+        <button onclick="window.location.href='scene1.html'">Previous</button>
+        <button onclick="window.location.href='scene3.html'">Next</button>
+    </div>
+
+    <script>
+        const CSV_URL = "https://raw.githubusercontent.com/move-coop/gun-violence-data/master/intermediate/stage2.01.2018.csv"; // Update this URL
+        const width = 1000, height = 600;
+        const margin = {top: 50, right: 50, bottom: 150, left: 70};
+
+        var xScale = d3.scaleBand().rangeRound([margin.left, width - margin.right]).padding(0.1);
+        var yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
+        var svg, tooltip, data, currentRegion;
+        var overallAvgKilled, overallAvgInjured;
+
+        const regions = {
+            west: ["California", "Oregon", "Washington", "Alaska", "Hawaii", "Nevada", "Arizona", "New Mexico", "Colorado", "Montana", "Utah", "Idaho", "Wyoming"],
+            east: ["Maine", "New Hampshire", "Vermont", "Massachusetts", "Rhode Island", "Connecticut", "New York", "New Jersey", "Pennsylvania", "Delaware", "Maryland", "District of Columbia", "Virginia", "West Virginia", "North Carolina", "South Carolina", "Georgia", "Florida"],
+            middle: ["Ohio", "Kentucky", "Tennessee", "Michigan", "Indiana", "Wisconsin", "Illinois", "Minnesota", "Iowa", "Missouri", "Arkansas", "Louisiana", "North Dakota", "South Dakota", "Nebraska", "Kansas", "Oklahoma", "Texas", "Mississippi", "Alabama"]
+        };
+
+        function initializeSvg() {
+            d3.select("svg").remove();
+            svg = d3.select("#scene_two").append("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            tooltip = d3.select("body").append("div")
+                .attr("class", "tooltip")
+                .style("opacity", 0);
+        }
+
+        function drawChart(type) {
+            var barClass = "bar-" + type;
+            var yAxisTitle = "Number of People";
+
+            initializeSvg();
+
+            var displayData = data.filter(d => regions[currentRegion].includes(d.key))
+                .map(d => ({ key: d.key, value: d[type] }))
+                .sort((a, b) => d3.descending(a.value, b.value));
+
+            var maxValue = d3.max(displayData, d => d.value);
+            xScale.domain(displayData.map(d => d.key));
+            yScale.domain([0, maxValue]);
+
+            svg.selectAll(".bar")
+                .data(displayData)
+                .enter().append("rect")
+                .attr("class", barClass)
+                .attr("x", d => xScale(d.key))
+                .attr("y", d => yScale(d.value))
+                .attr("width", xScale.bandwidth())
+                .attr("height", d => height - yScale(d.value) - margin.bottom)
+                .on("mouseover", (event, d) => {
+                    tooltip.transition().duration(200).style("opacity", .9);
+                    tooltip.html("Total: " + d.value)
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY - 28) + "px");
+                })
+                .on("mouseout", () => {
+                    tooltip.transition().duration(500).style("opacity", 0);
+                });
+
+            svg.append("g")
+                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
+                .call(d3.axisBottom(xScale))
+                .selectAll("text")
+                .style("text-anchor", "end")
+                .attr("dx", "-0.8em")
+                .attr("dy", "0.15em")
+                .attr("transform", "rotate(-65)");
+
+            svg.append("g")
+                .attr("transform", "translate(" + margin.left + ",0)")
+                .call(d3.axisLeft(yScale));
+
+            // Adding X-axis title
+            svg.append("text")
+                .attr("transform", "translate(" + (width / 2) + " ," + (height - margin.bottom / 3) + ")")
+                .style("text-anchor", "middle")
+                .text("State");
+
+            // Adding Y-axis title
+            svg.append("text")
+                .attr("transform", "rotate(-90)")
+                .attr("y", 0 - margin.left)
+                .attr("x", 0 - (height / 2))
+                .attr("dy", "1em")
+                .style("text-anchor", "middle")
+                .text(yAxisTitle);
+
+            // Adding average line for the selected type
+            var averageValue = type === "killed" ? overallAvgKilled : overallAvgInjured;
+            var averageLabel = type === "killed" ? "Avg Killed" : "Avg Injured";
+
+            svg.append("line")
+                .style("stroke", "black")
+                .style("stroke-dasharray", ("3, 3"))
+                .style("stroke-width", 1)
+                .attr("x1", margin.left)
+                .attr("y1", yScale(averageValue))
+                .attr("x2", width - margin.right)
+                .attr("y2", yScale(averageValue));
+
+            svg.append("text")
+                .attr("x", width - margin.right)
+                .attr("y", yScale(averageValue) - 10)
+                .style("text-anchor", "end")
+                .style("font-size", "14px")
+                .text(averageLabel + ": " + averageValue.toFixed(2));
+        }
+
+        d3.csv(CSV_URL, d3.autoType).then(csvData => {
+            data = Array.from(d3.group(csvData, d => d.state), ([key, values]) => ({
+                key: key,
+                killed: d3.sum(values, d => d.n_killed),
+                injured: d3.sum(values, d => d.n_injured)
+            }));
+
+            // Calculate overall average killed and injured incidents
+            var totalKilled = d3.sum(data, d => d.killed);
+            var totalInjured = d3.sum(data, d => d.injured);
+            var numStates = data.length;
+            overallAvgKilled = totalKilled / numStates;
+            overallAvgInjured = totalInjured / numStates;
+        }).catch(error => console.error("Error loading the data: " + error));
+
+        d3.select("#westButton").on("click", () => {
+            currentRegion = "west";
+            document.getElementById("dataButtons").style.display = "block";
+            drawChart("killed");
+        });
+
+        d3.select("#eastButton").on("click", () => {
+            currentRegion = "east";
+            document.getElementById("dataButtons").style.display = "block";
+            drawChart("killed");
+        });
+
+        d3.select("#middleButton").on("click", () => {
+            currentRegion = "middle";
+            document.getElementById("dataButtons").style.display = "block";
+            drawChart("killed");
+        });
+
+        d3.select("#killedButton").on("click", () => drawChart("killed"));
+        d3.select("#injuredButton").on("click", () => drawChart("injured"));
+    </script>
+</body>
+</html>
