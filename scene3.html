@@ -1,221 +1,56 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>Gun Violence Impact by Gun Type</title>
-    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Exploring Gun Violence Data</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
     <style>
         body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            max-width: 1200px;
-            margin: auto;
-            padding: 10px;
             font-family: Arial, sans-serif;
         }
-
         h1 {
-            color: #333;
-            font-size: xx-large;
+            font-size: 36px;
         }
-
+        h2 {
+            font-size: 30px;
+        }
+        h3, h4 {
+            font-size: 24px;
+        }
         p {
-            margin-top: 0.0em;
-            margin-bottom: 0.3em;
+            font-size: 18px;
         }
-
-        .bar {
-            fill: steelblue;
-        }
-
-        .tooltip {
-            position: absolute;
-            text-align: center;
-            width: 120px;
-            height: 28px;
-            padding: 2px;
-            font: 12px sans-serif;
-            background: lightsteelblue;
-            border: 0px;
-            border-radius: 8px;
-            pointer-events: none;
-        }
-
-        .button-group {
-            display: flex;
-            justify-content: center;
-            margin-top: 20px;
-        }
-
-        .button-group button {
-            margin-right: 10px;
-            background-color: #dbd8d8;
-            transition: background-color 0.3s ease;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-
-        .button-group button:hover {
-            background-color: #9b9898;
-        }
-
-        #killedButton {
-            background-color: orange;
-            color: white;
-        }
-        
-        #totalButton {
-            background-color: steelblue;
-            color: white;
-        }
-        
-        #injuredButton {
-            background-color: red;
-            color: white;
+        .scene-description {
+            margin-bottom: 20px;
         }
     </style>
 </head>
-
 <body>
-    <h1>Gun Violence Impact by Gun Type</h1>
-    <p>This chart shows the number of people killed and injured by different types of guns.</p>
+    <h1>Year 2018 Exploring Gun Violence: Analyzing Patterns and Trends</h1>
+    <h2>Neng Ji</h2>
+    <p>Welcome to our exploration of gun violence data. This interactive series delves into the incidents of gun violence across the United States, focusing on patterns and trends. Our goal is to present an informative analysis that raises awareness and encourages informed discussions about gun violence. By the end of this exploration, we hope you'll have a deeper understanding of the issue and its impact on communities.</p>
 
-    <div class="button-group">
-        <button id="injuredButton">Injured</button>
-        <button id="killedButton">Killed</button>
-        <button id="totalButton">Total</button>
+    <div class="scene-description">
+        <h3>Scene 1: Incidents by State - Regional Perspectives</h3>
+        <p>The journey begins with a comparison of gun violence incidents across various states. This scene examines the number of incidents in different states, providing insights into regional variations. Discover how geography plays a role in the prevalence of gun violence and explore potential reasons behind these differences.</p>
+        
     </div>
 
-    <div id="chart"></div>
-
-    <div class="button-group">
-        <button id="previousButton" onclick="window.location.href='scene2.html'">Previous</button>
-        <button id="returnButton" onclick="window.location.href='index.html'">Return to Beginning</button>
+    <div class="scene-description">
+        <h4>Scene 2: Impact Analysis - Deaths and Injuries</h4>
+        <p>The second scene focuses on the impact of gun violence in terms of deaths and injuries. By analyzing this data, we aim to illustrate the human cost of gun violence. Understand the number of casualties and injuries across different states and explore the broader implications on communities.</p>
+        
     </div>
 
-    <script>
-        const CSV_URL = "https://raw.githubusercontent.com/move-coop/gun-violence-data/master/intermediate/stage2.01.2018.csv";
-        const width = 1000,
-            height = 600;
-        const margin = {
-            top: 50,
-            right: 50,
-            bottom: 150,
-            left: 70
-        };
+    <div class="scene-description">
+        <h4>Scene 3: Incident Characteristics - Understanding the Context</h4>
+        <p>The final scene explores the characteristics of gun violence incidents, such as the types of firearms used. This scene provides insights into the nature of gun violence, helping to identify patterns and common factors. Join us as we investigate the context of these incidents, aiming to inform future prevention efforts.</p>
+        
+    </div>
+    <p>Our narrative visualization is more than a display of statistics; it tells the story of gun violence in America. We invite you to interact with these scenes, encouraging discussions about the significance of gun violence data and its impact on society.</p>
+    
+    <div class="button-group2">
+        <button onclick="window.location.href='scene1.html'">Start Exploration</button>
+    </div>
 
-        var xScale = d3.scaleBand().rangeRound([margin.left, width - margin.right]).padding(0.1);
-        var yScale = d3.scaleLinear().rangeRound([height - margin.bottom, margin.top]);
-        var svg, tooltip, data;
-
-        function initializeSvg() {
-            d3.select("svg").remove();
-            svg = d3.select("#chart").append("svg")
-                .attr("width", width)
-                .attr("height", height);
-
-            tooltip = d3.select("body").append("div")
-                .attr("class", "tooltip")
-                .style("opacity", 0);
-        }
-
-        function drawChart(data, color) {
-            initializeSvg();
-
-            var maxValue = d3.max(data, d => d.value);
-            xScale.domain(data.map(d => d.key));
-            yScale.domain([0, maxValue]);
-
-            svg.selectAll(".bar")
-                .data(data)
-                .enter().append("rect")
-                .attr("class", "bar")
-                .attr("x", d => xScale(d.key))
-                .attr("y", d => yScale(d.value))
-                .attr("width", xScale.bandwidth())
-                .attr("height", d => height - yScale(d.value) - margin.bottom)
-                .style("fill", color)
-                .on("mouseover", (event, d) => {
-                    tooltip.transition().duration(200).style("opacity", .9);
-                    tooltip.html("Total: " + d.value)
-                        .style("left", (event.pageX) + "px")
-                        .style("top", (event.pageY - 28) + "px");
-                })
-                .on("mouseout", () => {
-                    tooltip.transition().duration(500).style("opacity", 0);
-                });
-
-            svg.append("g")
-                .attr("transform", "translate(0," + (height - margin.bottom) + ")")
-                .call(d3.axisBottom(xScale))
-                .selectAll("text")
-                .style("text-anchor", "end")
-                .attr("dx", "-0.8em")
-                .attr("dy", "0.15em")
-                .attr("transform", "rotate(-65)");
-
-            svg.append("g")
-                .attr("transform", "translate(" + margin.left + ",0)")
-                .call(d3.axisLeft(yScale));
-
-            // Adding X-axis title
-            svg.append("text")
-                .attr("transform", "translate(" + (width / 2) + " ," + (height - margin.bottom / 3) + ")")
-                .style("text-anchor", "middle")
-                .text("Gun Type");
-
-            // Adding Y-axis title
-            svg.append("text")
-                .attr("transform", "rotate(-90)")
-                .attr("y", 0 - margin.left)
-                .attr("x", 0 - (height / 2))
-                .attr("dy", "1em")
-                .style("text-anchor", "middle")
-                .text("Number of People");
-        }
-
-        function processData(csvData, type) {
-            var gunData = {};
-
-            csvData.forEach(d => {
-                var total = (type === 'total') ? d.n_killed + d.n_injured : d[type];
-                if (d.gun_type) {
-                    d.gun_type.split('||').forEach(gunType => {
-                        var gunDesc = gunType.split('::')[1];
-                        if (gunDesc && gunDesc !== 'Unknown') {
-                            if (!gunData[gunDesc]) {
-                                gunData[gunDesc] = 0;
-                            }
-                            gunData[gunDesc] += total;
-                        }
-                    });
-                }
-            });
-
-            return Object.keys(gunData).map(key => ({
-                key: key,
-                value: gunData[key]
-            })).sort((a, b) => d3.descending(a.value, b.value));
-        }
-
-        d3.csv(CSV_URL).then(csvData => {
-            data = csvData.map(d => ({
-                ...d,
-                n_killed: +d.n_killed,
-                n_injured: +d.n_injured
-            }));
-            drawChart(processData(data, 'total'), 'steelblue'); // Default to total with steelblue color
-
-            d3.select("#injuredButton").on("click", () => drawChart(processData(data, 'n_injured'), 'red'));
-            d3.select("#killedButton").on("click", () => drawChart(processData(data, 'n_killed'), 'orange'));
-            d3.select("#totalButton").on("click", () => drawChart(processData(data, 'total'), 'steelblue'));
-        }).catch(error => console.error("Error loading the data: " + error));
-    </script>
 </body>
-
 </html>
