@@ -42,16 +42,6 @@ p {
     margin-bottom: 20px;
 }
 
-button {
-    margin: 5px;
-    padding: 10px;
-    border: none;
-    border-radius: 5px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
-}
-
 
 .tooltip {
     position: absolute;
@@ -79,21 +69,5 @@ button {
 }
 
 .button-group button:hover {
-    background-color: #9b9898;
-}
-
-.button-group2 {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px; 
-}
-
-.button-group2 button {
-    margin-right: 10px;
-    background-color: #dbd8d8;
-    transition: background-color 0.3s ease;
-}
-
-.button-group2 button:hover {
     background-color: #9b9898;
 }
