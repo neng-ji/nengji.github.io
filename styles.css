@@ -52,36 +52,6 @@ button {
     transition: background-color 0.3s ease;
 }
 
-#cityButton {
-    background-color: steelblue;
-    color: white;
-}
-
-#cityButton:hover {
-    background-color: darkblue;
-}
-
-#highwayButton {
-    background-color: orange;
-    color: white;
-}
-
-#highwayButton:hover {
-    background-color: darkorange;
-}
-
-#cityButton, #highwayButton {
-    margin-top: 5px;
-    margin-bottom: 0px;
-}
-
-.bar-city {
-    fill: steelblue;
-}
-
-.bar-highway {
-    fill: orange;
-}
 
 .tooltip {
     position: absolute;
