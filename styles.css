@@ -9,35 +9,6 @@ body {
     font-family: Arial, sans-serif;
 }
 
-h1 {
-    color: #333;
-    font-size:xx-large;
-}
-
-h2 {
-    color: #333;
-    margin-top: 0.2em;
-    margin-bottom: 1.2em;
-}
-
-h3 {
-    color: #333;
-    font-size: 22px;
-    margin-bottom: 0.6em;
-}
-
-h4 {
-    color: #333;
-    font-size: 22px;
-    margin-top: 0.2em;
-    margin-bottom: 0.6em;
-}
-
-p {
-    margin-top: 0.0em;
-    margin-bottom: 0.3em;
-}
-
 button {
     margin: 5px;
     padding: 10px;
